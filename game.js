@@ -144,7 +144,7 @@ function titleScreen() {
 }
 
 function starsHTML(n, cell = 3) { return [1, 2, 3].map((i) => `<span class="${i <= n ? 'on' : ''}">${px('star', cell, i <= n ? {} : { y: 'q', Y: 'w' })}</span>`).join(''); }
-function hpHTML(hp, max) { return Array.from({ length: max }, (_, i) => px('heart', 3, i < hp ? {} : { r: 's', R: 'S' })).join(''); }
+function hpHTML(hp, max) { return `<div class="bosshp"><i style="width:${Math.round((hp / max) * 100)}%"></i></div>` + Array.from({ length: max }, (_, i) => px('heart', 3, i < hp ? {} : { r: 's', R: 'S' })).join(''); }
 
 // the 4 overall difficulties, picked when the game starts
 const DIFFS = [
@@ -381,7 +381,7 @@ function question() {
     </div>
     <div class="stage">
       <div class="toki-wrap">${toki('idle', 96)}<div id="bubble" class="bubble">${hint}</div></div>
-      <div class="prompt">${prompt}</div>
+      <div class="prompt"><i class="torch l"></i><i class="torch r"></i>${prompt}</div>
     </div>
     ${body}
   </section>`;
@@ -652,10 +652,12 @@ function bossWin() {
   G.pos = -1;
   app.innerHTML = `<section class="screen result boss-win" style="--c:${w.color}">
     <div class="win-row">${toki('dance', 130)}<span class="boss friend">${px(boss.spr, 8)}<i>💖</i></span></div>
+    <div class="board"><i class="torch l"></i><i class="torch r"></i>
     <h1>ניצחת את ${boss.name}! ${px('trophy', 3)}</h1>
     <p>${boss.name} כבר לא חוסם את הדרך, ועכשיו הוא חבר של Toki.</p>
     <p class="earned">${px('coin', 2)} הרווחת <b id="earned">${G.earned}</b> מטבעות בקרב, ועוד 5 מטבעות על הניצחון!</p>
     ${first ? `<p class="unlock">${px('trophy', 2)} הגביע של ${w.name} נוסף לאי שלך!</p>` : ''}
+    </div>
     <div class="btn-row">
       <button class="big-btn prize-btn" id="prizeGo" hidden>🎁 צברת 20 מטבעות! לפרס</button>
       <button class="big-btn soft" id="again">קרב נוסף ↻</button>
@@ -679,6 +681,7 @@ function finishLevel() {
 
   app.innerHTML = `<section class="screen result" style="--c:${w.color}">
     ${toki('dance', 150)}
+    <div class="board"><i class="torch l"></i><i class="torch r"></i>
     <h1>${st === 3 ? 'מושלם!' : st === 2 ? 'כל הכבוד!' : 'סיימת את השלב!'}</h1>
     <div class="big-stars">${[1, 2, 3].map((i) => `<span class="${i <= st ? 'on' : ''}" style="animation-delay:${i * 0.25}s">${px('star', 9, i <= st ? {} : { y: 'q', Y: 'w' })}</span>`).join('')}</div>
     <p>ענית נכון על <b>${G.firstOK}</b> מתוך <b>${total}</b> כבר בניסיון הראשון.</p>
@@ -687,6 +690,7 @@ function finishLevel() {
     ${st < 3 ? '<p class="small">טיפ: כדי לקבל 3 כוכבים צריך לטעות לכל היותר פעם אחת.</p>' : ''}
     ${opensNext ? `<p class="unlock">🔓 נפתח שלב ${lvl + 1}: ${LV(w)[lvl].name}!</p>` : ''}
     ${lvl === LEVELS.length ? `<p class="unlock">🏝️ סיימת את כל השלבים בעולם ${w.name}! ${px(BOSSES[w.id].spr, 2)} ${BOSSES[w.id].name} מחכה לך.</p>` : ''}
+    </div>
     <div class="btn-row">
       <button class="big-btn prize-btn" id="prizeGo" hidden>🎁 צברת 20 מטבעות! לפרס</button>
       ${lvl < LEVELS.length ? `<button class="big-btn" id="nextLvl">לשלב ${lvl + 1} ◀</button>` : `<button class="big-btn" id="nextLvl">לקרב הבוס ${px(BOSSES[w.id].spr, 2)}</button>`}
