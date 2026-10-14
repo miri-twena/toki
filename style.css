@@ -598,7 +598,7 @@ p { font-size: 19px; line-height: 1.5; margin: 6px 0; }
 }
 
 /* credit line at the bottom-left of the home screen */
-.screen .credit { display: block; width: 100%; align-self: stretch; text-align: left; font-size: 14px; color: #2b3a4a; opacity: .85; margin: 14px 0 0; }
+.screen .credit { position: fixed; left: 12px; bottom: 92px; z-index: 5; margin: 0; width: auto; font-size: 14px; color: #2b3a4a; background: rgba(169, 204, 255, .85); padding: 2px 8px; pointer-events: none; }
 
 .arena.sea { height: 560px; }
 @media (max-width: 600px) { .arena.sea { height: 480px; } }
@@ -618,7 +618,7 @@ p { font-size: 19px; line-height: 1.5; margin: 6px 0; }
 .dict-fix { width: 100%; font-size: 36px; font-weight: 700; color: var(--good, #2e9e4f); text-shadow: 2px 2px 0 rgba(0, 0, 0, .25); }
 .balloon-in .opt-text, .fish-body .opt-text { display: flex; align-items: center; justify-content: center; min-height: 90px; padding: 8px 4px; font-size: 24px; background: rgba(255, 255, 255, .9); color: var(--ink); text-shadow: none; word-break: break-word; }
 .fish-body .opt-text { width: 110px; margin: 0 auto; }
-.title .credit { margin-top: 28px; }
+
 .rocket-body .opt-text { flex: 1; }
 .opt-text.letter { font-size: 44px; font-weight: 700; }
 .rocket-body .opt-text.letter { font-size: 48px; padding: 20px 8px; }
@@ -673,6 +673,7 @@ p { font-size: 19px; line-height: 1.5; margin: 6px 0; }
   .dict-type { margin-top: 6px; gap: 8px; } .dict-type input { font-size: 28px; padding: 8px 10px; }
   .boss-fight .options { grid-template-columns: repeat(2, 1fr); }
   .screen.game .credit { display: none; }
+  .screen .credit { bottom: 46px; left: 8px; font-size: 12px; }
   .spell { flex: 1; min-height: 0; width: 100%; display: flex; flex-direction: column; }
   .spell .arena.fall { flex: 1; }
   body { padding-bottom: 64px; }
