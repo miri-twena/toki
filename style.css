@@ -620,3 +620,12 @@ p { font-size: 19px; line-height: 1.5; margin: 6px 0; }
 .rocket-body .opt-text { flex: 1; }
 .opt-text.letter { font-size: 44px; font-weight: 700; }
 .rocket-body .opt-text.letter { font-size: 48px; padding: 20px 8px; }
+
+/* ---------- fit the screen the game runs on ----------
+   phones and small laptops keep the base size; tablets get a little more room,
+   laptops and desktops scale the whole game up so it fills a big screen. */
+@media (min-width: 1000px) { #app { max-width: 1000px; } }
+@media (min-width: 1300px) { html { zoom: 1.15; } #app { max-width: 1060px; } }
+@media (min-width: 1700px) { html { zoom: 1.4; } #app { max-width: 1120px; } }
+@media (min-width: 2300px) { html { zoom: 1.85; } }
+@media (min-width: 3200px) { html { zoom: 2.5; } }
