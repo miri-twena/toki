@@ -194,7 +194,7 @@ function mapScreen() {
     ${prizeWaiting() ? '<button class="big-btn prize-btn" id="prizeGo">🎁 צברת 20 מטבעות! לחצו לפרס</button>' : ''}
     <div class="islands">
       ${allWorlds().map((w) => `<div class="island ${w.custom ? 'dict' : ''}" style="--c:${w.color}">
-          <div class="island-top"><span class="island-icon">${px(w.id, 6)}</span><h2>${w.name}</h2>
+          <div class="island-top"><span class="island-icon emoji">${w.icon}</span><h2>${w.name}</h2>
             ${w.custom ? `<button class="edit-btn" id="dictEdit">✏️ ${w.words.length ? `${w.words.length} מילים · לערוך` : 'הכניסו את המילים להכתבה'}</button>` : ''}</div>
           ${LV(w).map((L) => {
             const open = (!w.custom || w.words.length > 0) && unlocked(w.id, L.n);

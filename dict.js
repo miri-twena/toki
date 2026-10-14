@@ -1,7 +1,7 @@
 // Toki - the "dictation" island: the parent types the words for the next dictation,
 // and every level of this island is built only from those words.
 
-const DICT_WORLD = { id: 'dict', name: 'הכתבה', icon: '✏️', color: '#8b4ad8', custom: true, get words() { return S.dict || []; }, sentences: [] };
+const DICT_WORLD = { id: 'dict', name: 'הכתבה', icon: '📝', color: '#8b4ad8', custom: true, get words() { return S.dict || []; }, sentences: [] };
 const allWorlds = () => [...WORLDS, DICT_WORLD];
 const findWorld = (id) => allWorlds().find((x) => x.id === id);
 BOSSES.dict = { icon: '🦉', spr: 'owl', name: 'הינשוף הבוחן' };

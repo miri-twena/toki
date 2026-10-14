@@ -102,7 +102,7 @@ const WORLDS = [
   {
     id: 'food',
     name: 'אוכל',
-    icon: '🍎',
+    icon: '🍕',
     color: '#f2994a',
     words: [
       { en: 'apple', he: 'תפוח', pic: '🍎' },
@@ -292,7 +292,7 @@ const WORLDS = [
   {
     id: 'weather',
     name: 'מזג אוויר ובגדים',
-    icon: '☂️',
+    icon: '☔',
     color: '#4aa3c7',
     words: [
       { en: 'rain', he: 'גשם', pic: '🌧️' },

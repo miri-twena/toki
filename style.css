@@ -684,3 +684,5 @@ p { font-size: 19px; line-height: 1.5; margin: 6px 0; }
 .card.faded { opacity: .25; }
 .arena.space .card.rocket.done.wrong .rocket-body { box-shadow: 0 0 0 6px var(--bad); }
 .prize-text.won, .prizebar.won { cursor: pointer; } .prize-text.won:hover { color: #ffffa0; text-decoration: underline; }
+/* island icons: a big clear emoji in a white block frame (Miri approved the mockup 2026-10-14) */
+.island-icon.emoji { width: 84px; height: 84px; font-size: 54px; background: #fff; border-color: #fff var(--c) var(--c) #fff; }
