@@ -1,7 +1,7 @@
 // Toki service worker: keeps a copy of the game so the app opens offline.
 // Bump VERSION whenever the game files change so players get the new version.
-const VERSION = 'toki-v3';
-const FILES = ['./', './index.html', './style.css', './data.js', './sprites.js', './game.js', './dict.js', './manifest.webmanifest',
+const VERSION = 'toki-v4';
+const FILES = ['./', './index.html', './style.css', './data.js', './sprites.js', './game.js', './dict.js', './lex.js', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png', './icons/apple-touch-icon.png', './icons/favicon.png'];
 
 self.addEventListener('install', (e) => {

@@ -606,7 +606,7 @@ p { font-size: 19px; line-height: 1.5; margin: 6px 0; }
 /* ---------- the dictation island ---------- */
 .edit-btn { margin-top: 10px; font-size: 15px; font-weight: 700; padding: 8px 12px; background: var(--gold); color: #3b2a00; border: 4px solid; border-color: #ffe27a #6b5200 #6b5200 #ffe27a; box-shadow: var(--shadow-sm); }
 .edit-btn:hover { filter: brightness(1.08); }
-.dict-box { max-width: 520px; width: 100%; }
+.dict-box { max-width: 560px; width: 100%; }
 .dict-box h2 { margin: 0 0 6px; }
 .dict-box textarea { width: 100%; font: inherit; font-size: 20px; line-height: 1.4; padding: 10px 12px; border: 4px solid; border-color: #373737 #fff #fff #373737; background: #1a1a1a; color: #fff; resize: vertical; }
 .he-word { font-size: 44px; font-weight: 700; color: var(--ink); line-height: 1.1; }
@@ -631,3 +631,18 @@ p { font-size: 19px; line-height: 1.5; margin: 6px 0; }
 @media (min-width: 1700px) { html { zoom: 1.4; } #app { max-width: 1120px; } }
 @media (min-width: 2300px) { html { zoom: 1.85; } }
 @media (min-width: 3200px) { html { zoom: 2.5; } }
+
+/* dictation word table */
+.dict-wrap { max-height: 46vh; overflow-y: auto; margin: 6px 0 2px; }
+.dict-table { width: 100%; border-collapse: separate; border-spacing: 6px; }
+.dict-table th { color: #ffffa0; font-size: 17px; text-shadow: 2px 2px 0 #2b2b2b; padding: 2px 4px; }
+.dict-table th.num, .dict-table td.num { width: 26px; color: #cfcfcf; font-size: 15px; text-align: center; }
+.dict-table td { padding: 0; }
+.dict-table input { width: 100%; box-sizing: border-box; font: inherit; font-size: 20px; padding: 8px 10px; border: 4px solid; border-color: #373737 #fff #fff #373737; background: #1a1a1a; color: #fff; }
+.dict-table input.en { text-align: left; }
+.dict-table input.he.auto { color: #b9f0d6; }
+.dict-table input::placeholder { color: #7a7a7a; font-size: 15px; }
+.dict-table .del { width: 34px; height: 40px; background: #8f8f8f; border: 3px solid; border-color: #d4d4d4 #3a3a3a #3a3a3a #d4d4d4; color: #fff; font-size: 18px; text-shadow: 1px 1px 0 #3a3a3a; cursor: pointer; }
+.dict-table .del:hover { background: #e05a5a; }
+.add-row { margin: 4px 0 6px; font-size: 17px; padding: 8px 16px; }
+@media (max-width: 600px) { .dict-box { padding: 14px 10px; } .dict-table { border-spacing: 4px; } .dict-table input { font-size: 17px; padding: 7px 8px; } .dict-table th { font-size: 15px; } .dict-table .del { width: 30px; } }

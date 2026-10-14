@@ -36,19 +36,58 @@ function dictEditor() {
   d.className = 'ask';
   d.innerHTML = `<div class="ask-box dict-box">
     <h2>✏️ המילים להכתבה הקרובה</h2>
-    <p class="small">כל מילה בשורה נפרדת. אפשר להוסיף תרגום אחרי סימן שווה, למשל <b dir="ltr">bread = לחם</b>. מומלץ לפחות 4 מילים.</p>
-    <textarea id="dictText" dir="ltr" rows="9" spellcheck="false" placeholder="bread = לחם&#10;apple = תפוח&#10;window = חלון">${esc(dictText(S.dict || []))}</textarea>
+    <p class="small">מקלידים את המילה באנגלית, והתרגום לעברית מתמלא לבד (אפשר לתקן אותו). מומלץ לפחות 4 מילים.</p>
+    <div class="dict-wrap"><table class="dict-table">
+      <thead><tr><th class="num">#</th><th>מילה באנגלית</th><th>מילה בעברית</th><th></th></tr></thead>
+      <tbody id="dictRows"></tbody>
+    </table></div>
+    <button class="big-btn soft add-row" id="dictAdd">+ הוספת שורה</button>
     <p class="small" id="dictCount"></p>
     <div class="btn-row"><button class="big-btn" id="dictSave">שמירה ✔</button><button class="big-btn soft" id="dictCancel">ביטול</button></div>
   </div>`;
   document.body.appendChild(d);
-  const ta = $('#dictText', d), count = $('#dictCount', d);
-  const update = () => { const n = parseDict(ta.value).length; count.textContent = n ? `${n} מילים` : 'עדיין אין מילים'; };
-  ta.oninput = update; update();
+  const rows = $('#dictRows', d), count = $('#dictCount', d);
+  const addRow = (en = '', he = '', auto = !he) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td class="num"></td>
+      <td><input class="en" dir="ltr" maxlength="20" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="apple" value="${esc(en)}"></td>
+      <td><input class="he ${auto ? 'auto' : ''}" maxlength="24" placeholder="התרגום יופיע כאן" value="${esc(he)}"></td>
+      <td><button class="del" title="מחיקה">✕</button></td>`;
+    rows.appendChild(tr);
+    const enIn = $('.en', tr), heIn = $('.he', tr);
+    const fill = () => { // the Hebrew follows the English until the parent edits it by hand
+      if (!heIn.classList.contains('auto')) return;
+      heIn.value = translateWord(enIn.value);
+      heIn.placeholder = enIn.value.trim() && !heIn.value ? 'לא במילון, כתבו כאן' : 'התרגום יופיע כאן';
+    };
+    enIn.oninput = () => { enIn.value = enIn.value.replace(/[^A-Za-z']/g, ''); fill(); update(); };
+    enIn.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); if (tr === rows.lastElementChild) addRow().focus(); else $('.en', tr.nextElementSibling).focus(); } };
+    heIn.oninput = () => { heIn.classList.toggle('auto', !heIn.value); if (!heIn.value) fill(); update(); };
+    $('.del', tr).onclick = () => { tr.remove(); if (!rows.children.length) addRow(); update(); };
+    if (auto && en) fill();
+    update();
+    return enIn;
+  };
+  const collect = () => {
+    const out = [], seen = new Set();
+    [...rows.children].forEach((tr) => {
+      const en = $('.en', tr).value.trim(), he = $('.he', tr).value.trim();
+      if (!en || seen.has(en.toLowerCase())) return;
+      seen.add(en.toLowerCase()); out.push({ en, he });
+    });
+    return out.slice(0, 40);
+  };
+  function update() {
+    [...rows.children].forEach((tr, i) => { $('.num', tr).textContent = i + 1; });
+    const n = collect().length; count.textContent = n ? `${n} מילים` : 'עדיין אין מילים';
+  }
+  (S.dict || []).forEach((w) => addRow(w.en, w.he, false));
+  while (rows.children.length < 5) addRow();
+  $('#dictAdd', d).onclick = () => { if (rows.children.length < 40) addRow().focus(); };
   $('#dictCancel', d).onclick = () => d.remove();
   $('#dictSave', d).onclick = () => {
-    const words = parseDict(ta.value);
-    if (words.length < 2) { count.textContent = 'צריך לפחות 2 מילים באנגלית.'; ta.focus(); return; }
+    const words = collect();
+    if (words.length < 2) { count.textContent = 'צריך לפחות 2 מילים באנגלית.'; $('.en', rows).focus(); return; }
     const changed = JSON.stringify(words) !== JSON.stringify(S.dict || []);
     S.dict = words;
     if (changed) { // a new list is a new dictation: the island's progress starts over
@@ -57,7 +96,7 @@ function dictEditor() {
     }
     save(); sfx.good(); d.remove(); mapScreen();
   };
-  ta.focus();
+  $('.en', rows).focus();
 }
 
 // ---------- building the questions ----------

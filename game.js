@@ -684,7 +684,6 @@ function prizeScreen() {
     <div class="confetti">${Array.from({ length: 40 }, (_, i) => `<i style="--x:${Math.random() * 100};--d:${(Math.random() * 2 + 2).toFixed(2)}s;--delay:${(Math.random() * 2).toFixed(2)}s;--h:${Math.floor(Math.random() * 360)}"></i>`).join('')}</div>
     <h1>🎉 זכית בפרס! 🎉</h1>
     <p>Toki קיבל תלבושת חדשה: כתר של אלופים! והנה התעודה שלך.</p>
-    ${window.TOKI_WEB ? '<p class="small">כדי להדפיס את התעודה, פתחו את המשחק מהמחשב (index.html).</p>' : ''}
     <label class="name-row">השם שלך לתעודה: <input id="kidName" maxlength="24" value="${esc(S.name)}" placeholder="כתבו כאן את השם"></label>
     <div id="certificate" class="certificate">
       <div class="cert-in">
@@ -698,7 +697,8 @@ function prizeScreen() {
       </div>
     </div>
     <div class="btn-row">
-      ${window.TOKI_WEB ? '' : '<button class="big-btn" id="print">🖨️ להדפיס את התעודה</button>'}
+      <button class="big-btn" id="savePdf">📄 שמירה כ‑PDF</button>
+      ${window.TOKI_WEB ? '' : '<button class="big-btn soft" id="print">🖨️ הדפסה</button>'}
       <button class="big-btn soft" id="toMap">🏠 חזרה הביתה</button>
     </div>
   </section>`;
@@ -706,7 +706,85 @@ function prizeScreen() {
   say('Congratulations! You are an English champion!', 0.9);
   $('#kidName').oninput = (e) => { S.name = e.target.value; save(); $('#certName').textContent = S.name || '__________'; };
   if ($('#print')) $('#print').onclick = () => window.print();
+  $('#savePdf').onclick = () => { try { saveCertificatePDF(date); } catch (e) { console.error(e); if (!window.TOKI_WEB) window.print(); } };
   $('#toMap').onclick = mapScreen;
+}
+
+// ---------- the certificate as a PDF file ----------
+// The certificate is drawn on a canvas (text in Hebrew and English plus a block Toki),
+// then wrapped as a one-page A4 landscape PDF built by hand, so no library is needed
+// and it works offline, on phones and in the web version.
+function drawCertificate(name, date) {
+  const W = 1684, H = 1190; // A4 landscape at 2x
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const x = c.getContext('2d');
+  const font = (px, w = 700) => `${w} ${px}px Fredoka, "Varela Round", "Segoe UI", "Arial Hebrew", Arial, sans-serif`;
+  x.fillStyle = '#f1e9d2'; x.fillRect(0, 0, W, H);
+  // double gold frame
+  x.strokeStyle = '#8a6a10'; x.lineWidth = 10; x.strokeRect(40, 40, W - 80, H - 80);
+  x.lineWidth = 4; x.strokeRect(64, 64, W - 128, H - 128);
+  // corner blocks
+  x.fillStyle = '#c99a06';
+  [[40, 40], [W - 88, 40], [40, H - 88], [W - 88, H - 88]].forEach(([px, py]) => { x.fillRect(px, py, 48, 48); x.fillStyle = '#ffd83d'; x.fillRect(px + 8, py + 8, 32, 32); x.fillStyle = '#c99a06'; });
+  // block Toki with a crown
+  const t = { x: W / 2 - 90, y: 120, s: 180 };
+  const r = (col, px, py, pw, ph) => { x.fillStyle = col; x.fillRect(t.x + px * t.s, t.y + py * t.s, pw * t.s, ph * t.s); };
+  r('rgba(0,0,0,.25)', .14, .96, .72, .06);          // shadow
+  r('#1e8f66', .22, .84, .16, .14); r('#1e8f66', .62, .84, .16, .14); // legs
+  r('#1e8f66', .0, .45, .14, .12); r('#1e8f66', .86, .45, .14, .12);  // arms
+  r('#1e8f66', .12, .06, .76, .78);                   // body edge
+  r('#3dcf9a', .17, .11, .66, .68); r('#8ff0c9', .17, .11, .66, .16); // body + highlight
+  r('#fff', .26, .34, .2, .22); r('#fff', .54, .34, .2, .22);         // eyes
+  r('#1a1a1a', .33, .4, .1, .1); r('#1a1a1a', .61, .4, .1, .1);       // pupils
+  r('#ff8fa8', .19, .6, .1, .07); r('#ff8fa8', .71, .6, .1, .07);     // cheeks
+  r('#1a1a1a', .4, .66, .2, .05);                                      // smile
+  r('#c99a06', .28, -.16, .44, .22); r('#ffd83d', .3, -.14, .4, .14);  // crown base
+  [.3, .44, .58].forEach((cx) => r('#ffd83d', cx, -.3, .12, .18));     // crown points
+  r('#e23b3b', .46, -.08, .08, .08);                                    // jewel
+  x.textAlign = 'center'; x.textBaseline = 'middle'; x.direction = 'rtl';
+  x.fillStyle = '#b8860b'; x.font = font(84); x.fillText('תעודת אלוף/ת אנגלית', W / 2, 420);
+  x.fillStyle = '#333'; x.font = font(40, 500); x.fillText('התעודה מוענקת ל', W / 2, 510);
+  x.fillStyle = '#1e8f66'; x.font = font(96); x.fillText(name || '__________', W / 2, 610);
+  x.fillStyle = '#d4a72c'; x.fillRect(W * .25, 670, W * .5, 6);
+  x.fillStyle = '#333'; x.font = font(40, 500);
+  x.fillText(`על צבירת ${PRIZE_GOAL} מטבעות במשחק Toki`, W / 2, 740);
+  x.fillText('ועל למידת מילים ומשפטים באנגלית.', W / 2, 800);
+  x.direction = 'ltr'; x.fillStyle = '#5a5a5a'; x.font = `italic 500 38px Fredoka, "Segoe UI", Arial, sans-serif`;
+  x.fillText('Great job! You are an English champion!', W / 2, 890);
+  x.font = font(32, 500); x.textAlign = 'left'; x.fillText('Toki', 110, 1060);
+  x.textAlign = 'right'; x.fillText(date, W - 110, 1060);
+  x.textAlign = 'center'; x.font = font(26, 500); x.fillStyle = '#8a8a8a'; x.fillText('נוצר ע"י לביא טוינה', W / 2, 1100);
+  return c;
+}
+function canvasToPDF(c) {
+  const jpg = atob(c.toDataURL('image/jpeg', 0.92).split(',')[1]);
+  const img = new Uint8Array(jpg.length); for (let i = 0; i < jpg.length; i++) img[i] = jpg.charCodeAt(i);
+  const pw = 842, ph = 595; // A4 landscape in points
+  const enc = new TextEncoder(), parts = [], offsets = []; let len = 0;
+  const push = (v) => { const b = typeof v === 'string' ? enc.encode(v) : v; parts.push(b); len += b.length; };
+  const obj = (n, head, stream) => { offsets[n] = len; push(`${n} 0 obj\n${head}\n`); if (stream) { push('stream\n'); push(stream); push('\nendstream\n'); } push('endobj\n'); };
+  push('%PDF-1.4\n%\xe2\xe3\xcf\xd3\n');
+  obj(1, '<< /Type /Catalog /Pages 2 0 R >>');
+  obj(2, '<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+  obj(3, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pw} ${ph}] /Resources << /XObject << /Im1 4 0 R >> >> /Contents 5 0 R >>`);
+  obj(4, `<< /Type /XObject /Subtype /Image /Width ${c.width} /Height ${c.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${img.length} >>`, img);
+  const content = `q ${pw} 0 0 ${ph} 0 0 cm /Im1 Do Q`;
+  obj(5, `<< /Length ${content.length} >>`, content);
+  const xref = len;
+  push(`xref\n0 6\n0000000000 65535 f \n${[1, 2, 3, 4, 5].map((n) => String(offsets[n]).padStart(10, '0') + ' 00000 n \n').join('')}`);
+  push(`trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`);
+  return new Blob(parts, { type: 'application/pdf' });
+}
+function saveCertificatePDF(date) {
+  const go = () => {
+    const blob = canvasToPDF(drawCertificate((S.name || '').trim(), date));
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = `toki-certificate${S.name ? '-' + S.name.trim().replace(/\s+/g, '-') : ''}.pdf`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    sfx.good();
+  };
+  if (document.fonts && document.fonts.load) document.fonts.load('700 40px Fredoka').then(go, go); else go();
 }
 
 $('#homeBtn').onclick = () => {
