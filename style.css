@@ -284,7 +284,9 @@ p { font-size: 19px; line-height: 1.5; margin: 6px 0; }
 
 /* ---------- mini-games: every level is its own little game ---------- */
 .arena { position: relative; width: 100%; height: 400px; overflow: hidden; border: 4px solid; border-color: #fff #555 #555 #fff; box-shadow: var(--shadow); }
-.arena .card { position: absolute; padding: 0; background: none; box-shadow: none; border: 0; }
+.arena .card { position: absolute; z-index: 1; padding: 0; background: none; box-shadow: none; border: 0; }
+.arena.sky::after, .arena.sea::before, .arena.sea::after, .arena.fall::before { z-index: 0; }
+.arena.fall .tile { z-index: 1; }
 .arena .card:not(.done):hover { box-shadow: none; }
 .arena .card:hover, .arena .tile:hover, .arena .card:hover * { animation-play-state: paused; }
 .arena .card.done, .arena .card.done * { animation-play-state: paused; }
