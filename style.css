@@ -767,3 +767,10 @@ body:has(.boss-fight)::after { opacity: .35; }
 .board h1 { margin-top: 0; }
 .board > p { color: #fff; text-shadow: 2px 2px 0 #2b2b2b; }
 .result .board .small { color: #fff3d6; }
+/* rockets get a real pointed nose (Miri asked 2026-10-14): a stepped pixel triangle on top of the body */
+.rocket-nose { width: 100%; height: 96px; border: 0; margin-bottom: -4px;
+  background: linear-gradient(180deg, hsl(var(--h) 80% 72%) 0 22%, hsl(var(--h) 70% 55%) 22% 100%);
+  clip-path: polygon(44% 0, 56% 0, 56% 12%, 62% 12%, 62% 25%, 69% 25%, 69% 38%, 75% 38%, 75% 50%, 81% 50%, 81% 62%, 88% 62%, 88% 75%, 94% 75%, 94% 88%, 100% 88%, 100% 100%, 0 100%, 0% 88%, 6% 88%, 6% 75%, 12% 75%, 12% 62%, 19% 62%, 19% 50%, 25% 50%, 25% 38%, 31% 38%, 31% 25%, 38% 25%, 38% 12%, 44% 12%, 44% 0%); }
+.rocket-nose::after { content: ''; display: block; width: 16px; height: 16px; margin: 62px auto 0; background: #dff6ff; border: 3px solid #2b4a6b; box-sizing: border-box; } /* porthole */
+.rocket-body { border-top-color: #3a3a3a; }
+@media (max-width: 700px) { .rocket-nose { height: 64px; border-width: 0; } .rocket-nose::after { width: 10px; height: 10px; margin-top: 42px; border-width: 2px; } }
