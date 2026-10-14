@@ -109,7 +109,12 @@ function updateBar() {
   $('#prizeFill').style.width = `${Math.min(100, (S.coins / PRIZE_GOAL) * 100)}%`;
   $('#prizeText').textContent = S.prizeDone ? 'זכית בפרס! 🏆'
     : S.coins >= PRIZE_GOAL ? '🎁 הפרס מחכה לך!' : `עוד ${PRIZE_GOAL - S.coins} לפרס 🎁`;
+  const won = S.prizeDone || S.coins >= PRIZE_GOAL;
+  $('#prizeText').classList.toggle('won', won); $('.prizebar').classList.toggle('won', won);
+  $('#prizeText').title = won ? 'לפתוח את מסך הפרס' : '';
 }
+// tapping the prize text or bar (once the prize is won) opens the prize screen again (Miri asked 2026-10-14)
+$('#prizeText').onclick = $('.prizebar').onclick = () => { if (S.prizeDone || S.coins >= PRIZE_GOAL) { if (G) { clearTimeout(G.autoNext); G.pos = -1; } prizeScreen(); } };
 function addCoins(n, label) {
   S.coins += n; save(); updateBar(); sfx.coin();
   const box = $('.coinbox');
@@ -331,7 +336,7 @@ function question() {
   const q = item.it;
   const lvl = G.boss ? item.type : G.lvl;
   G.cur = lvl;
-  G.busy = false; G.missed = false;
+  G.busy = false; G.missed = false; G.hinted = false;
   let options = [], prompt, optClass = '';
   const helperBtn = canSpeak ? `<button class="mic-btn" id="mic" ${G.helper ? '' : 'disabled'} title="Toki יקריא לאט">🎤<span>${G.helper}</span></button>` : '';
   const voiceBtns = canSpeak ? `<button class="sound-btn" id="hear" title="שמיעה">🔊</button>
@@ -365,7 +370,7 @@ function question() {
     ? `<div class="boss-bar"><span class="boss" id="boss">${px(G.boss.spr, 5)}</span>
         <div class="boss-info"><b>${G.boss.name}</b><div class="hp" id="hp">${hpHTML(G.hp, G.maxHp)}</div></div></div>`
     : `<div class="dots">${queue.map((x, i) => `<i class="${i < pos ? 'done' : i === pos ? 'now' : ''} ${x.repeat ? 'rep' : ''}"></i>`).join('')}</div>`;
-  const hint = G.boss ? `ענו נכון כדי לזרוק כוכב על ${G.boss.name}! ⭐` : LV(w)[lvl - 1].hint;
+  const hint = (G.boss ? `ענו נכון כדי לזרוק כוכב על ${G.boss.name}! ⭐` : LV(w)[lvl - 1].hint) + (G.pos === 0 ? `<br><span class="cheer">${pick(LEVEL_CHEER)}</span>` : '');
   const body = lvl === 4 ? spellingHTML(q) : w.custom && lvl === 5 ? dictTypeHTML() : optionsHTML(lvl, options, optClass);
 
   app.innerHTML = `<section class="screen game ${G.boss ? 'boss-fight' : ''}" style="--c:${w.color}">
@@ -517,17 +522,26 @@ function useHelper() {
   say(sayable(G.queue[G.pos].it), 0.6);
 }
 
+
+// ---------- Toki cheers the kid on, all game long ----------
+const PRAISE = ['כל הכבוד! 🌟', 'מצוין! 👏', 'נכון מאוד! 🎯', 'יופי! 💪', 'אלופים! 🏆', 'וואו, איזה כישרון! ✨', 'מדהים, ממשיכים ככה! 🚀',
+  'בול! אתם לומדים מהר! 🧠', 'איזה יופי של תשובה! 😍', 'טוקי גאה בכם! 💚', 'מושלם! 🎉', 'כמו מקצוענים! 😎', 'חד כמו סכין! ⚡', 'תשובה של אלופים! 🥇'];
+const CHEER_UP = ['לא נורא, ככה לומדים! 💚', 'טעויות הן חלק מהדרך, ממשיכים! 💪', 'עוד רגע זה יישב בראש! 🧠', 'אני מאמין בכם! ✨', 'אל תתייאשו, אתם ממש קרובים! 🌱',
+  'כל אלוף התחיל מטעויות! 🏆', 'יאללה, בפעם הבאה זה שלכם! 🚀', 'יופי שמנסים, זה מה שחשוב! 😊'];
+const LEVEL_CHEER = ['יאללה, מתחילים! אני איתכם 💚', 'בואו נראה מה אתם יודעים! 💪', 'היום הולך להיות מעולה! ✨', 'אתם יכולים, אני בטוח! 🚀', 'כל שאלה היא הזדמנות! 🌟'];
+const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
 // a right answer: coin, streak, cheer (and in a boss fight, a star thrown at the boss)
 function success(q) {
   sfx.good();
   setMood('happy', 900);
   G.streak++;
   if (!G.queue[G.pos].repeat) G.firstOK++;
-  let msg = ['כל הכבוד!', 'מצוין!', 'נכון מאוד!', 'יופי!', 'אלופים!'][Math.floor(Math.random() * 5)];
+  let msg = pick(PRAISE);
   addCoins(1); G.earned++;
   if (G.streak % 3 === 0) {
     setTimeout(() => { addCoins(1, 'בונוס רצף!'); G.earned++; }, 450);
-    msg = `רצף של ${G.streak}! 🔥 מטבע בונוס`;
+    msg = `רצף של ${G.streak}! 🔥 מטבע בונוס. ${pick(['אתם בוערים!', 'אי אפשר לעצור אתכם!', 'איזה כוח!', 'זה פשוט מדהים!'])}`;
   }
   bubble(msg);
   $('.streak').textContent = `🔥 ${G.streak}`;
@@ -575,16 +589,31 @@ function miss(q, msg) {
     boss.classList.remove('hit', 'laugh'); void boss.offsetWidth; boss.classList.add('laugh');
     msg = `${G.boss.name} צוחק: "חה חה!" 😝<br>${msg}`;
   }
-  bubble(msg);
+  bubble(`${msg}<br><span class="cheer">${pick(CHEER_UP)}</span>`);
   if (!G.queue[G.pos].repeat) G.queue.push({ ...G.queue[G.pos], repeat: true });
 }
 
 function choose(i) {
   if (G.busy) return;
-  G.busy = true;
   const q = G.queue[G.pos].it;
   const cards = app.querySelectorAll('.card');
+  if (cards[i].classList.contains('done')) return;
+  G.busy = true;
   const okIndex = G.options.findIndex((o) => o.ok);
+  // missing letter in the dictation island (Miri asked 2026-10-14): the first mistake earns a hint and another try
+  if (!G.options[i].ok && G.w.custom && G.cur === 3 && !G.boss && !G.hinted) {
+    G.hinted = true;
+    cards[i].classList.add('done', 'wrong');
+    const spare = [...cards].filter((c, k) => k !== i && k !== okIndex && !c.classList.contains('done'));
+    if (spare.length) pick(spare).classList.add('done', 'faded'); // one wrong letter goes away
+    sfx.bad(); setMood('sad', 900);
+    const c = q.en[pickGap.last] || '';
+    const vowel = 'aeiou'.includes(c.toLowerCase());
+    bubble(`רמז! 💡 ${q.he ? `המילה היא <b>${esc(q.he)}</b>. ` : ''}תקשיבו טוב לצליל... האות החסרה היא ${vowel ? 'אות תנועה (a, e, i, o, u)' : 'עיצור'} ${c.toLowerCase() === c.toUpperCase() ? '' : `שבאה ${pickGap.last === 0 ? 'בהתחלה' : pickGap.last === q.en.length - 1 ? 'בסוף' : `אחרי <b dir="ltr">${esc(q.en[pickGap.last - 1])}</b>`}`}. נסו שוב!<br><span class="cheer">${pick(CHEER_UP)}</span>`);
+    say(q.en, 0.7);
+    G.busy = false;
+    return;
+  }
   cards.forEach((c) => c.classList.add('done'));
 
   if (G.options[i].ok) {
@@ -603,7 +632,7 @@ function choose(i) {
       miss(q, `כמעט! זאת התשובה הנכונה.${q.he ? `<br><span class="trans">${esc(q.he)}</span>` : ''}`);
     }
     // no "continue" button: the kid sees and hears the right answer, then the game moves on by itself
-    G.autoNext = setTimeout(advance, 2800);
+    G.autoNext = setTimeout(advance, 5000);
   }
 }
 

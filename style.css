@@ -38,7 +38,7 @@ body {
   background: linear-gradient(180deg, var(--sky) 0%, var(--sky2) 100%) fixed;
   -webkit-tap-highlight-color: transparent;
   position: relative;
-  padding-bottom: 96px;
+  padding-bottom: 124px;
   image-rendering: pixelated;
 }
 /* pixel clouds */
@@ -76,7 +76,7 @@ b, h1, h2 { font-weight: 700; }
 
 /* ---------- top bar ---------- */
 #topbar {
-  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
+  position: relative; z-index: 20;
   display: flex; align-items: center; gap: 12px;
   padding: 8px 14px;
   background: rgba(20, 20, 20, .78);
@@ -231,7 +231,7 @@ p { font-size: 19px; line-height: 1.5; margin: 6px 0; }
   box-shadow: var(--shadow-sm); transition: none;
 }
 .card .pic { background: #a8a8a8; }
-.card:not(.done):hover { background: #9fa9d6; transform: none; box-shadow: var(--shadow-sm); }
+.card:not(.done):hover { transform: none; }
 .card.right { background: #5ad15a; border-color: #2e7a2e #c8ffc8 #c8ffc8 #2e7a2e; animation: bump .45s; }
 .card.right .pic { background: #a9f0a9; }
 .card.wrong { background: #e05a5a; border-color: #7a2e2e #ffc8c8 #ffc8c8 #7a2e2e; animation: shake .4s; }
@@ -646,3 +646,41 @@ p { font-size: 19px; line-height: 1.5; margin: 6px 0; }
 .dict-table .del:hover { background: #e05a5a; }
 .add-row { margin: 4px 0 6px; font-size: 17px; padding: 8px 16px; }
 @media (max-width: 600px) { .dict-box { padding: 14px 10px; } .dict-table { border-spacing: 4px; } .dict-table input { font-size: 17px; padding: 7px 8px; } .dict-table th { font-size: 15px; } .dict-table .del { width: 30px; } }
+
+/* ---------- phones: a level fits the screen with no scrolling ---------- */
+@media (max-width: 700px) {
+  #app { padding: 8px 10px 10px; }
+  .screen.game { height: calc(100dvh - 78px); min-height: 440px; overflow: hidden; }
+  .qhead { margin-bottom: 4px; gap: 6px; }
+  .streak { font-size: 14px; padding: 2px 8px; }
+  .dots { gap: 4px; } .dots i { width: 10px; height: 10px; }
+  .stage { margin: 2px 0 6px; gap: 8px; }
+  .game .toki-wrap { gap: 6px; }
+  .game .toki-wrap .toki { --size: 62px !important; }
+  .bubble { font-size: 13px; padding: 6px 8px; max-width: 150px; line-height: 1.25; }
+  .prompt { min-height: 60px; padding: 10px 10px 8px; gap: 8px; }
+  .prompt-pic { width: 110px; } .prompt-pic.small { width: 78px; }
+  .word { font-size: 32px; letter-spacing: 1px; } .sentence { font-size: 20px; }
+  .mic-btn, .sound-btn { width: 46px; height: 46px; font-size: 22px; }
+  .listen { font-size: 40px; }
+  .arena, .arena.sky, .arena.sea, .arena.space, .arena.fall { height: auto; flex: 1; min-height: 180px; width: 100%; }
+  .options { flex: 1; min-height: 0; overflow-y: auto; gap: 10px; align-content: start; }
+  .card.balloon { width: 38%; } .card.balloon::after { height: 22px; }
+  .card.fish { width: 112px; } .fish-body .pic { width: 64px; }
+  @keyframes swim { 0%, 100% { left: 3%; } 50% { left: calc(97% - 90px); } }
+  .arena.space .card.rocket { width: 32%; }
+  .slots { gap: 6px; margin: 2px 0; } .slot { width: 36px; height: 46px; line-height: 46px; font-size: 26px; }
+  .dict-type { margin-top: 6px; gap: 8px; } .dict-type input { font-size: 28px; padding: 8px 10px; }
+  .boss-fight .options { grid-template-columns: repeat(2, 1fr); }
+  .screen.game .credit { display: none; }
+  .spell { flex: 1; min-height: 0; width: 100%; display: flex; flex-direction: column; }
+  .spell .arena.fall { flex: 1; }
+  body { padding-bottom: 64px; }
+  body:has(.screen.game) { padding-bottom: 0; }
+  body::before { height: 40px; }
+}
+
+.bubble .cheer { display: block; margin-top: 4px; font-size: 14px; color: var(--toki3); font-weight: 700; }
+.card.faded { opacity: .25; }
+.arena.space .card.rocket.done.wrong .rocket-body { box-shadow: 0 0 0 6px var(--bad); }
+.prize-text.won, .prizebar.won { cursor: pointer; } .prize-text.won:hover { color: #ffffa0; text-decoration: underline; }

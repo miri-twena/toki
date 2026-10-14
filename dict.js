@@ -128,7 +128,8 @@ function pickGap(word) {
   const mid = [...word].map((c, i) => i).filter((i) => i > 0 && i < word.length - 1 && word[i] !== ' ');
   const vowels = mid.filter((i) => 'aeiou'.includes(word[i].toLowerCase()));
   const pool = vowels.length ? vowels : mid.length ? mid : [0];
-  return pool[Math.floor(Math.random() * pool.length)];
+  pickGap.last = pool[Math.floor(Math.random() * pool.length)]; // remembered for Toki's hint after a mistake
+  return pickGap.last;
 }
 function letterChoices(c, n) {
   const v = 'aeiou', all = 'abcdefghijklmnopqrstuvwxyz';
@@ -176,7 +177,7 @@ function setupDictType(q) {
       inp.parentNode.appendChild(fix);
       miss(q, `כמעט! כותבים <b dir="ltr">${esc(q.en)}</b>${q.he ? ` = ${esc(q.he)}` : ''}. נחזור על זה עוד מעט.`);
       if (!S.muted) say(q.en, 0.8);
-      G.autoNext = setTimeout(advance, 3200);
+      G.autoNext = setTimeout(advance, 5000);
     }
   };
   btn.onclick = check;
