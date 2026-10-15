@@ -31,17 +31,83 @@ function parseDict(text) {
 }
 const dictText = (words) => words.map((w) => (w.he ? `${w.en} = ${w.he}` : w.en)).join('\n');
 
+// ---- reading words from a photo (OCR in the browser, Tesseract.js loaded on first use) ----
+const OCR_VER = '5.1.1';
+const OCR_URLS = {
+  script: `https://cdn.jsdelivr.net/npm/tesseract.js@${OCR_VER}/dist/tesseract.min.js`,
+  workerPath: `https://cdn.jsdelivr.net/npm/tesseract.js@${OCR_VER}/dist/worker.min.js`,
+  corePath: `https://cdn.jsdelivr.net/npm/tesseract.js-core@${OCR_VER}`,
+  langPath: 'https://cdn.jsdelivr.net/npm/@tesseract.js-data/eng@1.0.0/4.0.0_best_int',
+};
+let ocrWorker = null;
+const loadScript = (src) => new Promise((ok, bad) => {
+  if (window.Tesseract) return ok();
+  const s = document.createElement('script');
+  s.src = src; s.onload = ok; s.onerror = () => bad(new Error('script ' + src));
+  document.head.appendChild(s);
+});
+async function getOcr(progress) {
+  if (ocrWorker) return ocrWorker;
+  await loadScript(OCR_URLS.script);
+  const w = await Tesseract.createWorker('eng', 1, {
+    workerPath: OCR_URLS.workerPath, corePath: OCR_URLS.corePath, langPath: OCR_URLS.langPath,
+    logger: (m) => { if (getOcr.progress) getOcr.progress(m); },
+  });
+  ocrWorker = w;
+  return w;
+}
+// scale the photo so letters are a good size for the reader, on a white background
+const ocrPrepare = (file) => new Promise((ok, bad) => {
+  const img = new Image(), url = URL.createObjectURL(file);
+  img.onload = () => {
+    URL.revokeObjectURL(url);
+    const big = Math.max(img.naturalWidth, img.naturalHeight) || 1;
+    const k = big > 2000 ? 2000 / big : big < 1000 ? 1000 / big : 1;
+    const c = document.createElement('canvas');
+    c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+    const x = c.getContext('2d');
+    x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
+    x.drawImage(img, 0, 0, c.width, c.height);
+    ok(c);
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); bad(new Error('image')); };
+  img.src = url;
+});
+async function ocrWords(canvas, progress) {
+  getOcr.progress = progress;
+  const w = await getOcr();
+  const { data } = await w.recognize(canvas);
+  const seen = new Set(), out = [];
+  const take = (raw, conf) => {
+    (String(raw).match(/[A-Za-z][A-Za-z']*[A-Za-z]/g) || []).forEach((t) => {
+      const word = t.toLowerCase().replace(/^'+|'+$/g, '');
+      if (word.length < 2 || word.length > 20 || conf < 30 || seen.has(word)) return;
+      if (!/[aeiouy]/.test(word)) return; // Hebrew letters read as "nnv": English words have a vowel
+      if (!translateWord(word) && conf < 70) return; // a word outside the dictionary must be read clearly
+      seen.add(word); out.push(word);
+    });
+  };
+  if (data.words && data.words.length) data.words.forEach((x) => take(x.text, x.confidence));
+  else take(data.text, 100);
+  return out.slice(0, 40);
+}
+
 function dictEditor() {
   const d = document.createElement('div');
   d.className = 'ask';
   d.innerHTML = `<div class="ask-box dict-box">
     <h2>✏️ המילים להכתבה הקרובה</h2>
-    <p class="small">מקלידים את המילה באנגלית, והתרגום לעברית מתמלא לבד (אפשר לתקן אותו). מומלץ לפחות 4 מילים.</p>
+    <p class="small">מקלידים את המילה באנגלית, או מצלמים דף מילים, והתרגום לעברית מתמלא לבד (אפשר לתקן אותו). מומלץ לפחות 4 מילים.</p>
     <div class="dict-wrap"><table class="dict-table">
       <thead><tr><th class="num">#</th><th>מילה באנגלית</th><th>מילה בעברית</th><th></th></tr></thead>
       <tbody id="dictRows"></tbody>
     </table></div>
-    <button class="big-btn soft add-row" id="dictAdd">+ הוספת שורה</button>
+    <div class="dict-tools">
+      <button class="big-btn soft add-row" id="dictAdd">+ הוספת שורה</button>
+      <button class="big-btn soft scan-btn" id="dictScan">📷 צילום / העלאת תמונה</button>
+      <input type="file" id="dictFile" accept="image/*" hidden>
+    </div>
+    <p class="small dict-status" id="dictStatus" hidden></p>
     <p class="small" id="dictCount"></p>
     <div class="btn-row"><button class="big-btn" id="dictSave">שמירה ✔</button><button class="big-btn soft" id="dictCancel">ביטול</button></div>
   </div>`;
@@ -84,6 +150,44 @@ function dictEditor() {
   (S.dict || []).forEach((w) => addRow(w.en, w.he, false));
   while (rows.children.length < 5) addRow();
   $('#dictAdd', d).onclick = () => { if (rows.children.length < 40) addRow().focus(); };
+  // photo / picture of a word list: the words are read from the image and dropped into the table
+  const scanBtn = $('#dictScan', d), fileIn = $('#dictFile', d), status = $('#dictStatus', d);
+  const setStatus = (t, kind = '') => { status.hidden = !t; status.textContent = t; status.className = `small dict-status ${kind}`; };
+  scanBtn.onclick = () => fileIn.click();
+  fileIn.onchange = async () => {
+    const file = fileIn.files && fileIn.files[0];
+    fileIn.value = '';
+    if (!file) return;
+    scanBtn.disabled = true; scanBtn.classList.add('busy');
+    try {
+      setStatus('🖼️ מכין את התמונה…');
+      const img = await ocrPrepare(file);
+      const words = await ocrWords(img, (m) => {
+        if (m.status === 'recognizing text') setStatus(`🔎 מזהה מילים… ${Math.round(m.progress * 100)}%`);
+        else setStatus('⬇️ טוען את מנוע הזיהוי (בפעם הראשונה זה לוקח קצת)…');
+      });
+      const have = new Set(collect().map((w) => w.en.toLowerCase()));
+      const fresh = words.filter((w) => !have.has(w));
+      if (!words.length) { setStatus('לא זוהו מילים באנגלית. נסו תמונה חדה יותר של טקסט מודפס, מקרוב.', 'bad'); return; }
+      if (!fresh.length) { setStatus('כל המילים שבתמונה כבר נמצאות בטבלה.', 'bad'); return; }
+      let added = 0;
+      fresh.forEach((w) => {
+        const empty = [...rows.children].find((tr) => !$('.en', tr).value.trim());
+        let inp;
+        if (empty) { inp = $('.en', empty); inp.value = w; inp.oninput(); }
+        else if (rows.children.length < 40) inp = addRow(w);
+        if (!inp) return;
+        added++; inp.closest('tr').classList.add('fresh');
+      });
+      setTimeout(() => rows.querySelectorAll('tr.fresh').forEach((tr) => tr.classList.remove('fresh')), 4000);
+      setStatus(`✅ נוספו ${added} מילים מהתמונה. כדאי לעבור עליהן ולתקן לפני השמירה.`, 'good');
+      sfx.good();
+      const first = $('tr.fresh .en', rows); if (first) first.scrollIntoView({ block: 'nearest' });
+    } catch (err) {
+      console.warn('ocr', err);
+      setStatus(navigator.onLine ? 'הזיהוי לא הצליח הפעם. נסו שוב, או הקלידו את המילים.' : 'לזיהוי מילים מתמונה צריך חיבור לאינטרנט (בפעם הראשונה).', 'bad');
+    } finally { scanBtn.disabled = false; scanBtn.classList.remove('busy'); }
+  };
   $('#dictCancel', d).onclick = () => d.remove();
   $('#dictSave', d).onclick = () => {
     const words = collect();
